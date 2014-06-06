@@ -1,7 +1,7 @@
 require 'cli/modular_options'
 
 describe CLI::WithOptions do
-  let(:mod){ TestModels.new_module 'meh', false }
+  let(:mod){ TestModels.new_module :add_options => false }
   
   it "doesn't create CLI_OPTS_HOOKS until necessary" do
     expect(mod.const_defined? :CLI_OPTS_HOOKS).to eq false
@@ -23,35 +23,145 @@ describe CLI::WithOptions do
 end
 
 describe CLI::ModularOptions do
-  let(:basic){ TestModels.new_class modular_options: true } 
-  it 'has no hooks by default' do
-    expect(basic.cli_hooks).to be_an(Array).and be_empty
+  shared_examples_for TestModels do
+    it 'Inherits included cli_hooks' do
+      expect(klass.cli_hooks.size).to be call_order.size unless call_order.nil?
+    end
+    
+    it 'Invokes cli_hooks in the correct order' do
+      expect(klass.new([]).cli_opts[:call_order]).to eq call_order
+    end
   end
   
-  context 'when included module has options' do
-    let(:klass){ 
-      TestModels.new_class(
-        :modular_options => true, 
-        :feature_modules => ['One', 'Two', 'Three']
-      )
-    }
-    
-    it 'inherits included cli_hooks' do
-      expect(klass.cli_hooks.size).to be 3
-    end
-    
-    it 'invokes hooks by the order in which they were included' do
-      expect(klass.new([]).cli_opts[:order]).to eq ['One', 'Two', 'Three']
-    end
+  context 'When no options' do
+    let(:klass){ TestModels.new_class modular_options: true }
+    let(:call_order){ nil }
+    it_behaves_like TestModels
+  end
+  
+  context 'When included modules have options' do
+    let(:klass){ TestModels.new_class(
+      :modular_options => true, 
+      :feature_modules => ['One', 'Two', 'Three']
+    )}
+    let(:call_order){ ['One', 'Two', 'Three'] }
+    it_behaves_like TestModels
+  end
+  
+  context 'When both a class and its included modules have options' do
+    let(:klass){ TestModels.new_class(
+      :name => 'Base',
+      :modular_options => true,
+      :with_options => true,
+      :feature_modules => ['One', 'Two', 'Three']
+    )}
+    let(:call_order){ ['One', 'Two', 'Three', 'Base'] }
+    it_behaves_like TestModels
   end
 
-#  context 'when superclass has options' do
-#  end
-#  
-#  context 'when module included by superclass has options' do
-#  end
-#
-#  context 'when a class and its included modules have options' do
-#  end
+  context 'When base class has options' do
+    let(:klass){ TestModels.new_class(
+      :name => 'Sub',
+      :base => TestModels.new_class(
+        :name => 'Base',
+        :modular_options => true,
+        :with_options => true
+      )
+    )}
+    let(:call_order){ ['Base'] }
+    it_behaves_like TestModels
+  end
+  
+  context 'when base class includes modules with options' do
+    let(:klass){ TestModels.new_class(
+      :base => TestModels.new_class(
+        :modular_options => true,
+        :feature_modules => ['One', 'Two', 'Three']
+      )
+    )}
+    let(:call_order){ ['One', 'Two', 'Three'] }
+    it_behaves_like TestModels
+  end
+  
+  context 'When base class both has and includes options' do
+    let(:klass){ TestModels.new_class(
+      :name => 'Derived',
+      :base => TestModels.new_class(
+        :name => 'Base',
+        :modular_options => true,
+        :with_options => true,
+        :feature_modules => ['One', 'Two', 'Three']
+      )
+    )}
+    let(:call_order){ ['One', 'Two', 'Three', 'Base'] }
+    it_behaves_like TestModels
+  end
+  
+  context 'When both base class and derived class have and include options' do
+    let(:klass){ TestModels.new_class(
+      :name => 'Derived',
+      :with_options => true,
+      :feature_modules => ['Four', 'Five', 'Six'],
+      :base => TestModels.new_class(
+        :name => 'Base',
+        :modular_options => true,
+        :with_options => true,
+        :feature_modules => ['One', 'Two', 'Three']
+      )
+    )}
+    let(:call_order){ Array[
+      'One', 'Two', 'Three', 'Base',
+      'Four', 'Five', 'Six', 'Derived'
+    ]}
+    it_behaves_like TestModels
+  end
+  
+  context 'When re-opening base class to include module with options' do
+    let(:klass){
+      base = TestModels.new_class(
+        :name => 'Base',
+        :modular_options => true,
+        :with_options => true,
+        :feature_modules => ['One', 'Two', 'Three']
+      )
+      sub = TestModels.new_class(
+        :name => 'Sub',
+        :with_options => true,
+        :feature_modules => ['Four', 'Five', 'Six'],
+        :base => base
+      )
+      base.send :include, TestModels.new_module(:name => 'Added')
+      sub
+    }
+    let(:call_order){ Array[
+      'One', 'Two', 'Three', 'Added', 'Base',
+      'Four', 'Five', 'Six', 'Sub'
+    ]}
+    it_behaves_like TestModels
+  end
+  
+  context 'When re-opening base class to declare options directly' do
+    let(:klass){
+      base = TestModels.new_class(
+        :name => 'Base',
+        :modular_options => true,
+        :with_options => true,
+        :feature_modules => ['One', 'Two', 'Three']
+      )
+      sub = TestModels.new_class(
+        :name => 'Sub',
+        :with_options => true,
+        :feature_modules => ['Four', 'Five', 'Six'],
+        :base => base
+      )
+      TestModels.new_test_hook base, 'BaseAgain'
+      sub
+    }
+    let(:call_order){ Array[
+      'One', 'Two', 'Three', 'Base', 'BaseAgain',
+      'Four', 'Five', 'Six', 'Sub'
+    ]}
+    it_behaves_like TestModels
+  end
 end
 
