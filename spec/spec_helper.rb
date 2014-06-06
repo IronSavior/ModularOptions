@@ -36,7 +36,7 @@ module TestModels
     Class.new args[:base] do
       if args[:modular_options]
         include CLI::ModularOptions
-        def initialize( argv )
+        def initialize( argv = [] )
           parse_options! argv
         end
       end

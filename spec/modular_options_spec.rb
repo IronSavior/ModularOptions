@@ -29,7 +29,7 @@ describe CLI::ModularOptions do
     end
     
     it 'Invokes cli_hooks in the correct order' do
-      expect(klass.new([]).cli_opts[:call_order]).to eq call_order
+      expect(klass.new.cli_opts[:call_order]).to eq call_order
     end
   end
   
