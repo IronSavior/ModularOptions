@@ -1,8 +1,10 @@
 require 'optparse'
+
 module CLI
   
   module WithOptions
     def cli_options( &block )
+      raise ArgumentError, 'Block required but not given' unless block_given?
       const_set :CLI_OPTS_HOOKS, Array.new unless const_defined? :CLI_OPTS_HOOKS, false
       const_get(:CLI_OPTS_HOOKS) << block
     end
