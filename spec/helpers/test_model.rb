@@ -5,6 +5,8 @@ module TestModel
     k = name.to_s.downcase.to_sym
     mod.instance_eval do
       cli_options do |p, cfg|
+        cfg[:context] ||= Array.new
+        cfg[:context] << self.class
         cfg[:call_order] ||= Array.new
         cfg[:call_order] << name.to_s
         cfg[k] ||= false

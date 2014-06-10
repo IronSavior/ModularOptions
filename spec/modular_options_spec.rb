@@ -7,6 +7,10 @@ describe CLI::ModularOptions do
       expect(klass.cli_hooks.size).to be call_order.size unless call_order.nil?
     end
     
+    it 'Invokes cli_hooks in the context of self' do
+      expect(klass.new.cli_opts[:context]).to all be(klass) unless call_order.nil?
+    end
+    
     it 'Invokes cli_hooks in the correct order' do
       expect(klass.new.cli_opts[:call_order]).to eq call_order
     end
@@ -51,7 +55,7 @@ describe CLI::ModularOptions do
     it_behaves_like TestModel
   end
   
-  context 'when base class includes modules with options' do
+  context 'When base class includes modules with options' do
     let(:klass){ TestModel.new_class(
       :base => TestModel.new_class(
         :modular_options => true,
@@ -64,7 +68,7 @@ describe CLI::ModularOptions do
   
   context 'When base class both has and includes options' do
     let(:klass){ TestModel.new_class(
-      :name => 'Derived',
+      :name => 'Sub',
       :base => TestModel.new_class(
         :name => 'Base',
         :modular_options => true,
@@ -78,7 +82,7 @@ describe CLI::ModularOptions do
   
   context 'When both base class and derived class have and include options' do
     let(:klass){ TestModel.new_class(
-      :name => 'Derived',
+      :name => 'Sub',
       :with_options => true,
       :feature_modules => ['Four', 'Five', 'Six'],
       :base => TestModel.new_class(
@@ -90,7 +94,7 @@ describe CLI::ModularOptions do
     )}
     let(:call_order){ Array[
       'One', 'Two', 'Three', 'Base',
-      'Four', 'Five', 'Six', 'Derived'
+      'Four', 'Five', 'Six', 'Sub'
     ]}
     it_behaves_like TestModel
   end
@@ -142,4 +146,103 @@ describe CLI::ModularOptions do
     ]}
     it_behaves_like TestModel
   end
+  
+  context 'When re-opening derived class to include module with options' do
+    let(:klass){
+      base = TestModel.new_class(
+        :name => 'Base',
+        :modular_options => true,
+        :with_options => true,
+        :feature_modules => ['One', 'Two', 'Three']
+      )
+      sub = TestModel.new_class(
+        :name => 'Sub',
+        :with_options => true,
+        :feature_modules => ['Four', 'Five', 'Six'],
+        :base => base
+      )
+      sub.send :include, TestModel.new_module(:name => 'Added')
+      sub
+    }
+    let(:call_order){ Array[
+      'One', 'Two', 'Three', 'Base',
+      'Four', 'Five', 'Six', 'Added', 'Sub'
+    ]}
+    it_behaves_like TestModel
+  end
+  
+  context 'When re-opening derived class to declare options directly' do
+    let(:klass){
+      base = TestModel.new_class(
+        :name => 'Base',
+        :modular_options => true,
+        :with_options => true,
+        :feature_modules => ['One', 'Two', 'Three']
+      )
+      sub = TestModel.new_class(
+        :name => 'Sub',
+        :with_options => true,
+        :feature_modules => ['Four', 'Five', 'Six'],
+        :base => base
+      )
+      TestModel.new_cli_hook sub, 'SubAgain'
+      sub
+    }
+    let(:call_order){ Array[
+      'One', 'Two', 'Three', 'Base',
+      'Four', 'Five', 'Six', 'Sub', 'SubAgain'
+    ]}
+    it_behaves_like TestModel
+  end
+  
+  context 'When adding cli_hooks to module already included by base class' do
+    let(:klass){
+      mod = TestModel.new_module :name => 'Two'
+      base = TestModel.new_class(
+        :name => 'Base',
+        :modular_options => true,
+        :with_options => true,
+        :feature_modules => ['One', mod, 'Three']
+      )
+      sub = TestModel.new_class(
+        :name => 'Sub',
+        :with_options => true,
+        :feature_modules => ['Four', 'Five', 'Six'],
+        :base => base
+      )
+      TestModel.new_cli_hook mod, 'TwoAgain'
+      sub
+    }
+    let(:call_order){ Array[
+      'One', 'Two', 'TwoAgain', 'Three', 'Base',
+      'Four', 'Five', 'Six', 'Sub'
+    ]}
+    it_behaves_like TestModel
+  end
+  
+  context 'When adding cli_hooks to module already included by derived class' do
+    let(:klass){
+      mod = TestModel.new_module :name => 'Five'
+      base = TestModel.new_class(
+        :name => 'Base',
+        :modular_options => true,
+        :with_options => true,
+        :feature_modules => ['One', 'Two', 'Three']
+      )
+      sub = TestModel.new_class(
+        :name => 'Sub',
+        :with_options => true,
+        :feature_modules => ['Four', mod, 'Six'],
+        :base => base
+      )
+      TestModel.new_cli_hook mod, 'FiveAgain'
+      sub
+    }
+    let(:call_order){ Array[
+      'One', 'Two', 'Three', 'Base',
+      'Four', 'Five', 'FiveAgain', 'Six', 'Sub'
+    ]}
+    it_behaves_like TestModel
+  end
+
 end
