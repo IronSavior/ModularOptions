@@ -17,7 +17,7 @@ module CLI
     
     def new_options_parser
       OptionParser.new do |p|
-        self.class.cli_hooks.each{ |b| b.call p, cli_opts }
+        self.class.cli_hooks.each{ |b| instance_exec p, cli_opts, &b }
       end
     end
     
