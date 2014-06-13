@@ -4,11 +4,11 @@ require 'helpers/test_model'
 describe CLI::ModularOptions do
   shared_examples_for TestModel do
     it 'Inherits included cli_hooks' do
-      expect(klass.cli_hooks.size).to be call_order.size unless call_order.nil?
+      expect(klass.cli_hooks.size).to be call_order.size
     end
     
     it 'Invokes cli_hooks in the context of self' do
-      expect(klass.new.cli_opts[:context]).to all be(klass) unless call_order.nil?
+      expect(klass.new.cli_opts[:context]).to all be(klass)
     end
     
     it 'Invokes cli_hooks in the correct order' do
@@ -18,7 +18,7 @@ describe CLI::ModularOptions do
   
   context 'When no options' do
     let(:klass){ TestModel.new_class modular_options: true }
-    let(:call_order){ nil }
+    let(:call_order){ Array.new }
     it_behaves_like TestModel
   end
   

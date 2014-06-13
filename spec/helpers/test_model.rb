@@ -5,11 +5,9 @@ module TestModel
     k = name.to_s.downcase.to_sym
     mod.instance_eval do
       cli_options do |p, cfg|
-        cfg[:context] ||= Array.new
-        cfg[:context] << self.class
-        cfg[:call_order] ||= Array.new
+        cfg[:context]    << self.class
         cfg[:call_order] << name.to_s
-        cfg[k] ||= false
+        cfg[k] = false
         p.on "--#{k}" do
           cfg[k] = true
         end
@@ -37,10 +35,12 @@ module TestModel
       :feature_modules =>  Array.new
     }.merge args
     
-    Class.new args[:base] do
+    Class.new args[:base] {
       if args[:modular_options]
         include CLI::ModularOptions
         def initialize( argv = [] )
+          cli_opts[:context]    = Array.new
+          cli_opts[:call_order] = Array.new
           parse_options! argv
         end
       end
@@ -53,6 +53,6 @@ module TestModel
         extend CLI::WithOptions
         TestModel.new_cli_hook self, args[:name]
       end
-    end
+    }
   end
 end
