@@ -3,16 +3,12 @@ require 'helpers/test_model'
 
 describe CLI::ModularOptions do
   shared_examples_for TestModel do
-    it 'Inherits included cli_hooks' do
-      expect(klass.cli_hooks.size).to be call_order.size
-    end
-    
     it 'Invokes cli_hooks in the context of self' do
-      expect(klass.new.cli_opts[:context]).to all be(klass)
+      expect(klass.new.cfg[:context]).to all be(klass)
     end
     
     it 'Invokes cli_hooks in the correct order' do
-      expect(klass.new.cli_opts[:call_order]).to eq call_order
+      expect(klass.new.cfg[:call_order]).to eq call_order
     end
   end
   
@@ -242,6 +238,16 @@ describe CLI::ModularOptions do
       'One', 'Two', 'Three', 'Base',
       'Four', 'Five', 'FiveAgain', 'Six', 'Sub'
     ]}
+    it_behaves_like TestModel
+  end
+  
+  context 'When using options from non-ancestor modules' do
+    let(:klass){ TestModel.new_class(
+      :modular_options => true,
+      :inherit_options_from => TestModel.new_module(:name => 'Other'),
+      :feature_modules => ['One', 'Two', 'Three']
+    )}
+    let(:call_order){ ['Other'] }
     it_behaves_like TestModel
   end
 

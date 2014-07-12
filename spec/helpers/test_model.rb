@@ -4,7 +4,7 @@ module TestModel
   def self.new_cli_hook( mod, name )
     k = name.to_s.downcase.to_sym
     mod.instance_eval do
-      cli_options do |p, cfg|
+      cli_options do |p|
         cfg[:context]    << self.class
         cfg[:call_order] << name.to_s
         cfg[k] = false
@@ -38,10 +38,19 @@ module TestModel
     Class.new args[:base] {
       if args[:modular_options]
         include CLI::ModularOptions
+        
+        define_method :inherit_options_from do
+          args[:inherit_options_from] || self.class
+        end
+        
+        def cfg
+          @cfg ||= Hash.new
+        end
+        
         def initialize( argv = [] )
-          cli_opts[:context]    = Array.new
-          cli_opts[:call_order] = Array.new
-          parse_options! argv
+          cfg[:context]    = Array.new
+          cfg[:call_order] = Array.new
+          cfg[:positional] = new_cli_parser(inherit_options_from).parse! argv
         end
       end
       

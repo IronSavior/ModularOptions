@@ -8,9 +8,9 @@ Gem::Specification.new do |s|
   s.license     = 'MIT'
   s.author      = 'Erik Elmore'
   s.email       = 'erik@erikelmore.com'
-  s.homepage    = 'https://github.com/IronSavior/ModularOptions'
+  s.homepage    = 'https://github.com/IronSavior/cli-modular_options'
   
-  s.version     = '0.0.0'
+  s.version     = '0.0.1'
   s.files       = Dir.glob('lib/**/*.rb') + ['LICENSE', 'README.md']
   s.test_files  = Dir.glob('spec/**/*.rb')
   s.add_development_dependency 'rspec', '~> 3'

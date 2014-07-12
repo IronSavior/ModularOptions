@@ -6,7 +6,6 @@ options in the context of a class or module and consume them in the context of
 an object instance using conventional ruby inheritance semantics.
 
 ### Install:
-
     gem install cli-modular_options
 
 ### Example:
@@ -19,11 +18,11 @@ module DatabaseStuff
   # Your mixin methods might go here
   
   cli_options do |parser|
-    p.separator 'Database Options:'
-    p.on '--db-user', 'Database username' do |v|
+    parser.separator 'Database Options:'
+    parser.on '--db-user', 'Database username' do |v|
       cli_opts[:db_user] = v
     end
-    p.on '--db-pass', 'Database password' do |v|
+    parser.on '--db-pass', 'Database password' do |v|
       cli_opts[:db_pass] = v
     end
   end
@@ -32,7 +31,7 @@ end
 module StandardOptions
   extend CLI::WithOptions
   cli_options do |parser|
-    p.on_head '-h', '--help', 'Display help' do
+    parser.on_head '-h', '--help', 'Display help' do
       cli_opts[:show_help] = true
       cli_opts[:parser] = parser
     end
@@ -44,14 +43,17 @@ class MyApp
   include DatabaseStuff
   include StandardOptions
   
+  def cli_opts
+    @cli_opts ||= Hash.new
+  end
+  
   def show_help
     puts cli_opts[:parser]
     Process.exit 0
   end
   
   def initialize( argv = ARGV.map(&:dup) )
-    parse_options! argv
-    # Your options are available in cli_opts
+    cli_opts[:positional] = new_options_parser.parse! argv
     show_help if cli_opts[:show_help]
   end
 end
@@ -88,6 +90,9 @@ class MyQuietApp < MyVerboseApp
   end
 end
 ```
+
+### Development:
+https://github.com/IronSavior/cli-modular_options
 
 ### Copyrights
 Copyright (C) 2014 Erik Elmore <erik@erikelmore.com>
