@@ -53,7 +53,7 @@ class MyApp
   end
   
   def initialize( argv = ARGV.map(&:dup) )
-    cli_opts[:positional] = new_options_parser.parse! argv
+    cli_opts[:positional] = new_cli_parser.parse! argv
     show_help if cli_opts[:show_help]
   end
 end
